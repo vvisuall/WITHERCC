@@ -1,3 +1,3 @@
-# WITHERCC
-- #1 professional skidder
+# SCRIPT SRCS HERE
+- #SCRIPT SOURCES HERE
 - https://discord.gg/U8FhFdvGcf
