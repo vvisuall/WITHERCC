@@ -1,0 +1,57 @@
+local UserInputService = game:GetService("UserInputService")
+
+local AIR_LAG_COMPENSATION_ENABLED = true
+local BREAK_LAG_COMPENSATION_ENABLED = true
+local SPEED_BOOST_AMOUNT = 5
+
+local scriptEnabled = true
+
+local function ToggleScript()
+    scriptEnabled = not scriptEnabled
+end
+
+local function HandleAirLagCompensation(player, action)
+    if scriptEnabled and AIR_LAG_COMPENSATION_ENABLED then
+        wait(1)
+    end
+end
+
+local function HandleBreakLagCompensation(action)
+    if scriptEnabled and BREAK_LAG_COMPENSATION_ENABLED then
+        wait(1)
+    end
+end
+
+local success, err = pcall(function()
+    setffflag("S2PhysicsSenderRate", 2)
+end)
+if not success then
+    warn("Error activating S2PhysicsSenderRate:", err)
+end
+
+local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+if humanoid then
+    humanoid.WalkSpeed = SPEED_BOOST_AMOUNT
+else
+    warn("Humanoid not found in player's character.")
+end
+
+local player = game.Players.LocalPlayer
+local jumpAction = "Jump"
+
+local successAir, errAir = pcall(function()
+    HandleAirLagCompensation(player, jumpAction)
+end)
+if not successAir then
+    warn("Error in air lag compensation:", errAir)
+end
+
+local successBreak, errBreak = pcall(function()
+    local breakAction = "Break"
+    HandleBreakLagCompensation(breakAction)
+end)
+if not successBreak then
+    warn("Error in break lag compensation:", errBreak)
+end
+
+sethiddenproperty(lp.Character.HumanoidRootPart, "NetworkIsSleeping", true)
