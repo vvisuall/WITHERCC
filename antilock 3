@@ -1,0 +1,56 @@
+lua
+REVERSE = true
+TOGGLEKEY = "x"
+SPEED = 0.5
+
+--[ THE TOGGLE ]--
+game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(MouseUpButton1)
+    if MouseUpButton1 == TOGGLEKEY then
+        if REVERSE == true then
+            REVERSE = false
+        else
+            REVERSE = true
+        end
+    end
+end)
+
+    --[The CFrame]--
+    game:GetService("RunService").Heartbeat:Connect(
+    function()
+        if cframespeedtoggle == true then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame +
+                -game.Players.LocalPlayer.Character.Humanoid.MoveDirection * SPEED / 0.5
+        end
+    end)
+    
+    --[The Gun Fix]--
+    for _, v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+        if v:IsA("Script") and v.Name ~= "Health" and v.Name ~= "Sound" and v:FindFirstChild("LocalScript") then
+            v:Destroy()
+        end
+    end
+    game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+        repeat
+            wait()
+        until game.Players.LocalPlayer.Character
+        char.ChildAdded:Connect(function(child)
+            if child:IsA("Script") then 
+                wait(0.1)
+                if child:FindFirstChild("LocalScript") then
+                    child.LocalScript:FireServer()
+                end
+            end
+        end)
+    end)
+
+    
+    --[" The Anti Lock"]--
+    game.RunService.Heartbeat:Connect(function()
+        if REVERSE then  
+        local CurrentVelocity = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = -CurrentVelocity
+        game.RunService.RenderStepped:Wait()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = CurrentVelocity
+        end    
+    end)
