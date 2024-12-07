@@ -1,0 +1,44 @@
+lua
+local RunService = game:GetService("RunService")
+
+getgenv().refusal = {
+    Key = Enum.KeyCode.Z,
+    Enabled = false,
+}
+
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == getgenv().refusal.Key then
+        getgenv().refusal.Enabled = not getgenv().refusal.Enabled
+
+        if getgenv().refusal.Enabled then
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "aa",
+                Text = "on",
+                Duration = 3,
+            })
+        else
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "nega",
+                Text = "off",
+                Duration = 3,
+            })
+        end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if getgenv().refusal.Enabled then
+        local v = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(0.01), 0)
+
+        local randomVelocity = Vector3.new(
+            math.random(-3000, 3000),
+            math.random(-3000, 3000),
+            math.random(-3000, 3000)
+        )
+
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = randomVelocity
+        RunService.RenderStepped:Wait()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = v
+    end
+end)
