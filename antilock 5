@@ -1,0 +1,67 @@
+lua
+-- Highest Roblox velocity is 128^2 or 16384
+local velMax = (128 ^ 2)
+
+-- Time to release and choke the replication packets
+local timeRelease, timeChoke = 0.015, 0.105
+
+-- Function aliases
+local Property, Wait = sethiddenproperty, wait
+local Radian, Random, Ceil = math.rad, math.random, math.ceil
+local Angle = CFrame.Angles
+local Vector = Vector3.new
+local Service = game.GetService
+
+-- Services
+local Run = Service(game, 'RunService')
+local statPing = Service(game, 'Stats').PerformanceStats.Ping
+local Root = Service(game, 'Players').LocalPlayer.Character.HumanoidRootPart
+
+-- Connections
+local runRen, runBeat = Run.RenderStepped, Run.Heartbeat
+local runRenWait, runRenCon = runRen.Wait, runRen.Connect
+local runBeatCon = runBeat.Connect
+
+-- Ping function
+local Ping = statPing.GetValue
+
+-- Client replication choking/sleeping
+local function Sleep()
+    return Property(Root, 'NetworkIsSleeping', true)
+end
+
+-- Initialization
+local function Init()
+    local rootVel = Root.Velocity
+    local rootAng = Random(-180, 180)
+    local rootOffset do
+        local X = Random(-velMax, velMax)
+        local Y = Random(0, velMax)
+        local Z = Random(-velMax, velMax)
+        rootOffset = Vector(X, -Y, Z)
+    end
+
+    Root.CFrame *= Angle(0, Radian(rootAng), 0)
+    Root.Velocity = rootOffset
+
+    -- Miscellaneous velocities (rotational, linear, angular)
+    runRenWait(runRen) -- Quickly synchronize velocity before rendering (smoother?)
+    Root.CFrame *= Angle(0, Radian(-rootAng), 0)
+    Root.Velocity = rootVel
+end
+
+-- Keep initialization running in the background
+runBeatCon(runBeat, Init)
+
+-- Main loop
+while Wait(timeRelease) do
+    -- Stable replication packets
+    local chokeClient, chokeServer = runBeatCon(runBeat, Sleep), runRenCon(runRen, Sleep)
+
+    -- Ping-based choke time (replace with timeChoke for constant time)
+    Wait(Ceil(Ping(statPing)) / 1000)
+
+    -- Disconnect choke connections
+    chokeClient:Disconnect()
+    chokeServer:Disconnect()
+end
