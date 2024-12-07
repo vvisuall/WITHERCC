@@ -1,0 +1,43 @@
+local Settings = {
+  Custom = {
+    Enabled = false,
+    X = 0,
+    Y = 0,
+    Z = 0
+  },
+  Up = {
+    Enabled = false,
+    Amount = 0
+  },
+  Down = {
+    Enabled = false,
+    Amount = 0
+  },
+  VelMultiply = {
+    Enabled = false,
+    WalkAmt = 0,
+    JumpAmt = 0
+  },
+  LookVec = {
+    Enabled = false,
+    Amount = 0
+  },
+  Reverse = {
+    Enabled = false,
+    Amount = 0,
+    Type = "CFrame" -- Velocity & CFrame
+  },
+  Confusion = {
+    Enabled = false,
+    Amount = false
+  },
+  PredBreaker = nil,
+  Desync = {
+    Enabled = false,
+    X = 0,
+    Y = 0,
+    Z = 0,
+    Angles = 2
+  }
+}
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Sigma-3131/Scripts/main/Vylix%20AA%20src"))()
