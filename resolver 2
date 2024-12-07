@@ -1,0 +1,23 @@
+local previousPosition = nil
+    local previousTime = nil
+
+    local function NewVelocity(object)
+        local currentPosition = object.Position
+        local currentTime = tick()
+
+        if previousPosition and previousTime then
+            local deltaTime = currentTime - previousTime
+            local velocity = (currentPosition - previousPosition) / deltaTime
+
+            object.Velocity = velocity
+        end
+
+        previousPosition = currentPosition
+        previousTime = currentTime
+    end
+
+    RunService.Heartbeat:Connect(function()
+        if Target and Target.Character and Target.Character:FindFirstChild(IHateNiggers.Silent.AimPart).Velocity.magnitude > IHateNiggers.Resolving.Velocity then
+            NewVelocity(Target.Character[IHateNiggers.Silent.AimPart])
+        end
+    end)
