@@ -1,0 +1,422 @@
+getgenv().Blaq = {
+    ["Version"] = "Camlock",
+    ["Prediction"] = {
+        ["Horizontal"] = 0.17685216,
+        ["Vertical"] = 0.17685216,
+        ["Auto"] = false
+    },
+    ["Smoothness"] = {
+        ["Enabled"] = false,
+        ["Value"] = 0.5
+    },
+    ["Target"] = {
+        ["Hit Part"] = "HumanoidRootPart",
+        ["Air"] = {
+            ["Free Falling"] = "UpperTorso",
+            ["Jump"] = "LowerTorso"
+        }
+    },
+    ["Offsets"] = {
+        ["Jump"] = {
+            ["Value"] = 0.25,
+            ["Enabled"] = false
+        },
+        ["Free Falling"] = {
+            ["Enabled"] = false,
+            ["Value"] = -1.5
+        }
+    },
+    ["Lock"] = {
+        ["Keybind"] = Enum.KeyCode.Q,
+        ["Mode"] = "Toggle",
+        ["Enabled"] = false
+    },
+    ["Checks"] = {
+        ["Death"] = true,
+        ["Grabbed"] = true,
+        ["Wall"] = {
+            ["Enabled"] = false,
+            ["Origin"] = "Camera"
+        }
+    },
+    ["FOV"] = {
+        ["Enabled"] = false,
+        ["Radius"] = 100,
+        ["Visible"] = false
+    },
+    ["Miscellaneous"] = {
+        ["Notifications"] = true,
+        ["Highlight Target"] = {
+            ["Enabled"] = true,
+            ["Fill Color"] = Color3.new(1, 0, 0),
+            ["Outline Color"] = Color3.new(1, 1, 1),
+            ["Fill Transparency"] = 0.5,
+            ["Outline Transparency"] = 0
+        }
+    },
+    ["HvH"] = {
+        ["Anti Aim"] = {
+            ["Enabled"] = false,
+            ["X"] = 0,
+            ["Y"] = 0,
+            ["Z"] = 0,
+            ["Keybind"] = Enum.KeyCode.N
+        },
+        ["Target Strafe"] = {
+            ["Radius"] = 15,
+            ["Speed"] = 25,
+            ["Keybind"] = Enum.KeyCode.Z,
+            ["Mode"] = "Toggle",
+            ["Enabled"] = false
+        },
+        ["Cframe"] = {
+            ["Keybind"] = Enum.KeyCode.C,
+            ["Mode"] = "Hold",
+            ["Value"] = 5,
+            ["Enabled"] = false
+        }
+    }
+}
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+
+
+local player = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+
+
+    local MainEvent, Argument
+    if game.PlaceId == 2788229376 then
+        MainEvent, Argument = ReplicatedStorage.MainEvent, "UpdateMousePosI"
+    elseif game.PlaceId == 9825515356 then
+        MainEvent, Argument = ReplicatedStorage.MainEvent, "MousePosUpdate"
+    elseif game.PlaceId == 5602055394 then
+        MainEvent, Argument = ReplicatedStorage.MAINEVENT, "MousePos"
+    elseif game.PlaceId == 17403265390 or game.PlaceId == 17403166075 or game.PlaceId == 17403262882 or game.PlaceId == 15186202290 or game.PlaceId == 15763494605 then
+        MainEvent, Argument = ReplicatedStorage.MAINEVENT, "MOUSE"
+    elseif game.PlaceId == 11143225577 then
+        MainEvent, Argument = ReplicatedStorage.MAINEVENT, "UpdateMousePos"
+    elseif game.PlaceId == 15166543806 then
+        MainEvent, Argument = ReplicatedStorage.MAINEVENT, "MoonUpdateMousePos"
+    elseif game.PlaceId == 17319408836 then
+        MainEvent, Argument = ReplicatedStorage.MAINEVENT, "UpdateMousePos"
+    elseif game.PlaceId == 16033173781 or game.PlaceId == 7213786345 then
+        MainEvent, Argument = ReplicatedStorage.MainEvent, "UpdateMousePosI"
+    elseif game.PlaceId == 18110728826 then
+        MainEvent, Argument = ReplicatedStorage.MainEvent, "UpdateMousePos"
+    elseif game.PlaceId == 15644861772 then
+        MainEvent, Argument = game:GetService("ReplicatedStorage")[".gg/flamehood"], "UpdateMousePos"
+    else
+        MainEvent, Argument = ReplicatedStorage.MainEvent, "UpdateMousePos"
+    end
+
+    local function CheckAnti(Plr)
+        if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = Plr.Character.HumanoidRootPart
+            return hrp.Velocity.Y < -70 or hrp.Velocity.X > 450 or hrp.Velocity.X < -35 or hrp.Velocity.Y > 60 or hrp.Velocity.Z > 35 or hrp.Velocity.Z < -35
+        end
+        return false
+    end
+
+    local FOVCircle = Drawing.new("Circle")
+    FOVCircle.Thickness = 2
+    FOVCircle.Color = Color3.new(1, 1, 1)
+    FOVCircle.Filled = false
+    FOVCircle.Transparency = 1
+
+    RunService:BindToRenderStep("UpdateFOV", 1, function()
+        if not FOVCircle then return end
+        FOVCircle.Visible = getgenv().Blaq.FOV.Visible
+        FOVCircle.Radius = getgenv().Blaq.FOV.Radius
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    end)
+
+    local function GetClosest()
+        local ClosestPlayer, ShortestDistance = nil, math.huge
+        local CenterScreen = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        for _, Player in pairs(Players:GetPlayers()) do
+            if Player ~= player and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                local ScreenPoint = Camera:WorldToScreenPoint(Player.Character.HumanoidRootPart.Position)
+                local Vector, OnScreen = Vector2.new(ScreenPoint.X, ScreenPoint.Y), ScreenPoint.Z > 0
+                if OnScreen then
+                    local Distance = (Vector - CenterScreen).Magnitude
+                    if Distance < ShortestDistance and (not getgenv().Blaq.FOV.Enabled or Distance <= getgenv().Blaq.FOV.Radius) then
+                        ClosestPlayer, ShortestDistance = Player, Distance
+                    end
+                end
+            end
+        end
+        return ClosestPlayer
+    end
+
+    local function WallCheck(Origin, Part)
+        if not getgenv().Blaq["Checks"]["Wall"].Enabled then return true end
+        local IgnoreList = {player.Character, Part.Parent}
+        local Parts = Camera:GetPartsObscuringTarget({Origin, Part.Position}, IgnoreList)
+        return #Parts == 0
+    end
+
+    local function GetOrigin()
+        if getgenv().Blaq["Checks"]["Wall"].Origin == "Camera" then
+            return Camera.CFrame.Position
+        elseif getgenv().Blaq["Checks"]["Wall"].Origin == "Torso" then
+            return player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart.Position or Camera.CFrame.Position
+        else
+            return Camera.CFrame.Position
+        end
+    end
+
+    local function Death(Target) return Target and Target.Character and Target.Character:FindFirstChild("Humanoid") and Target.Character.Humanoid.Health <= 0 end
+    local function Grabbed(Target) return Target and Target.Character and Target.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil end
+
+    local HighlightFolder = Instance.new("Folder")
+    HighlightFolder.Name = "HighlightFolder"
+    HighlightFolder.Parent = CoreGui
+
+    local function HighlightTarget(Target)
+        if not getgenv().Blaq["Miscellaneous"]["Highlight Target"]["Enabled"] then return end
+        for _, highlight in pairs(HighlightFolder:GetChildren()) do highlight:Destroy() end
+        if Target and Target.Character then
+            local Highlight = Instance.new("Highlight")
+            Highlight.Name = Target.Name .. "_Highlight"
+            Highlight.FillColor = getgenv().Blaq["Miscellaneous"]["Highlight Target"]["Fill Color"]
+            Highlight.OutlineColor = getgenv().Blaq["Miscellaneous"]["Highlight Target"]["Outline Color"]
+            Highlight.FillTransparency = getgenv().Blaq["Miscellaneous"]["Highlight Target"]["Fill Transparency"]
+            Highlight.OutlineTransparency = getgenv().Blaq["Miscellaneous"]["Highlight Target"]["Outline Transparency"]
+            Highlight.Adornee = Target.Character
+            Highlight.Parent = HighlightFolder
+        end
+    end
+
+    local function AutoPrediction()
+        local ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()
+        if ping < 130 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1297, 0.1452
+        elseif ping < 125 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1357, 0.1402
+        elseif ping < 110 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1209, 0.1398
+        elseif ping < 105 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1201, 0.1370
+        elseif ping < 90 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.136, 0.1225
+        elseif ping < 80 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1347, 0.1256
+        elseif ping < 70 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1239, 0.1256
+        elseif ping < 60 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1247, 0.1176
+        elseif ping < 50 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1315, 0.1164
+        elseif ping < 40 then
+            getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical = 0.1291, 0.1137
+        end
+    end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local function CreateButton(name, position)
+        local Button = Instance.new("TextButton")
+        Button.Size = UDim2.new(0, 80, 0, 80)
+        Button.Position = position
+        Button.Text = name
+        Button.Parent = ScreenGui
+        Button.BackgroundColor3 = Color3.new(1, 1, 1)
+        Button.BorderSizePixel = 0
+        Button.Font = Enum.Font.SourceSansBold
+        Button.TextColor3 = Color3.new(1, 0, 0)
+        Button.TextSize = 18
+        Button.AutoButtonColor = false
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0.5, 0)
+        Corner.Parent = Button
+
+        local Dragging = false
+        local DragInput
+        local DragStart
+        local StartPos
+
+        local function Update(input)
+            local Delta = input.Position - DragStart
+            Button.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+        end
+
+        Button.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                Dragging = true
+                DragStart = input.Position
+                StartPos = Button.Position
+
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        Dragging = false
+                    end
+                end)
+            end
+        end)
+
+        Button.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                DragInput = input
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input == DragInput and Dragging then
+                Update(input)
+            end
+        end)
+
+        return Button
+    end
+
+    local LockButton = CreateButton("Lock", UDim2.new(0.9, -40, 0.4, -40))
+    local StrafeButton = CreateButton("Strafe", UDim2.new(0.9, -40, 0.55, -40))
+    local CframeButton = CreateButton("CFrame", UDim2.new(0.9, -40, 0.7, -40))
+
+    LockButton.MouseButton1Click:Connect(function()
+        Locking = not Locking
+        if Locking then 
+            Target = GetClosest()
+            if Target then Notify("Targeting: " .. Target.Name) else Notify("No target found") Locking = false end
+        else Target = nil Notify("Unlocked") end
+    end)
+    print("nigga")
+    StrafeButton.MouseButton1Click:Connect(function()
+        TargetStrafeEnabled = not TargetStrafeEnabled
+        Notify("Target Strafe: " .. (TargetStrafeEnabled and "ON" or "OFF"))
+    end)
+
+    CframeButton.MouseButton1Click:Connect(function()
+        CframeEnabled = not CframeEnabled
+        Notify("CFrame: " .. (CframeEnabled and "ON" or "OFF"))
+    end)
+
+    UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+        if not GameProcessed then
+            if Input.KeyCode == getgenv().Blaq.Lock.Keybind then
+                if getgenv().Blaq.Lock.Mode == "Toggle" then
+                    Locking = not Locking
+                    if Locking then 
+                        Target = GetClosest()
+                        if Target then Notify("Targeting: " .. Target.Name) else Notify("No target found") Locking = false end
+                    else Target = nil Notify("Unlocked") end
+                elseif getgenv().Blaq.Lock.Mode == "Hold" then
+                    Locking = true
+                    Target = GetClosest()
+                    if Target then Notify("Targeting: " .. Target.Name) else Notify("No target found") Locking = false end
+                end
+            elseif Input.KeyCode == getgenv().Blaq["HvH"]["Target Strafe"].Keybind then
+                if getgenv().Blaq["HvH"]["Target Strafe"].Mode == "Toggle" then
+                    TargetStrafeEnabled = not TargetStrafeEnabled
+                    Notify("Target Strafe: " .. (TargetStrafeEnabled and "ON" or "OFF"))
+                elseif getgenv().Blaq["HvH"]["Target Strafe"].Mode == "Hold" then
+                    TargetStrafeEnabled = true
+                end
+            elseif Input.KeyCode == getgenv().Blaq.HvH.Cframe.Keybind then
+                if getgenv().Blaq.HvH.Cframe.Mode == "Toggle" then
+                    CframeEnabled = not CframeEnabled
+                    Notify("CFrame: " .. (CframeEnabled and "ON" or "OFF"))
+                elseif getgenv().Blaq.HvH.Cframe.Mode == "Hold" then
+                    CframeEnabled = true
+                end
+            elseif Input.KeyCode == getgenv().Blaq["Hide Guis"] then
+                GuisVisible = not GuisVisible
+                ScreenGui.Enabled = GuisVisible
+                Notify("GUIs " .. (GuisVisible and "Visible" or "Hidden"))
+            end
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(Input, GameProcessed)
+        if not GameProcessed then
+            if Input.KeyCode == getgenv().Blaq.Lock.Keybind and getgenv().Blaq.Lock.Mode == "Hold" then
+                Locking = false
+                Target = nil
+                Notify("Unlocked")
+            elseif Input.KeyCode == getgenv().Blaq.HvH["Target Strafe"].Keybind and getgenv().Blaq.HvH["Target Strafe"].Mode == "Hold" then
+                TargetStrafeEnabled = false
+            elseif Input.KeyCode == getgenv().Blaq.HvH.Cframe.Keybind and getgenv().Blaq.HvH.Cframe.Mode == "Hold" then
+                CframeEnabled = false
+            end
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if getgenv().Blaq.Prediction.Auto then
+            AutoPrediction()
+        end
+
+        if Locking and Target and Target.Character then
+            local TargetPart = Target.Character:FindFirstChild(getgenv().Blaq.Target["Hit Part"])
+            if TargetPart and not Death(Target) and not Grabbed(Target) then
+                local Origin = GetOrigin()
+                if WallCheck(Origin, TargetPart) then
+                    local Prediction = TargetPart.Velocity * Vector3.new(getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical, 0)
+                    local TargetPosition = TargetPart.Position + Prediction
+                    
+                    if CheckAnti(Target) then
+                        local MovementDirection = Target.Character.Humanoid.MoveDirection
+                        local WalkSpeed = Target.Character.Humanoid.WalkSpeed
+                        local JumpPower = Target.Character.Humanoid.JumpPower
+                        TargetPosition = TargetPosition + (MovementDirection * WalkSpeed * Vector3.new(getgenv().Blaq.Prediction.Horizontal, getgenv().Blaq.Prediction.Vertical, 0))
+                        TargetPosition = TargetPosition + Vector3.new(0, JumpPower * getgenv().Blaq.Prediction.Vertical, 0)
+                    end
+                    
+                    local HumanoidState = Target.Character:FindFirstChildOfClass("Humanoid") and Target.Character.Humanoid:GetState()
+                    if getgenv().Blaq.Offsets.Jump.Enabled and HumanoidState == Enum.HumanoidStateType.Jumping then
+                        TargetPosition = TargetPosition + Vector3.new(0, getgenv().Blaq.Offsets.Jump.Value, 0)
+                    elseif getgenv().Blaq.Offsets["Free Falling"].Enabled and HumanoidState == Enum.HumanoidStateType.Freefall then
+                        TargetPosition = TargetPosition + Vector3.new(0, getgenv().Blaq.Offsets["Free Falling"].Value, 0)
+                    end
+                    
+                    if getgenv().Blaq.Version == "Camlock" then
+                        local TargetCFrame = CFrame.lookAt(Camera.CFrame.Position, TargetPosition)
+                        if getgenv().Blaq.Smoothness.Enabled then
+                            Camera.CFrame = Camera.CFrame:Lerp(TargetCFrame, getgenv().Blaq.Smoothness.Value)
+                        else
+                            Camera.CFrame = TargetCFrame
+                        end
+                    end
+                    if MainEvent and Argument then
+                        MainEvent:FireServer(Argument, TargetPosition)
+                    end
+                end
+                HighlightTarget(Target)
+            else
+                HighlightTarget(nil)
+            end
+        else
+            HighlightTarget(nil)
+        end
+
+        if TargetStrafeEnabled and Target and Target.Character then
+            local targetRoot = Target.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local angle = tick() * getgenv().Blaq.HvH["Target Strafe"].Speed
+                local radius = getgenv().Blaq.HvH["Target Strafe"].Radius
+                local targetPos = targetRoot.Position
+                local strafePos = targetPos + Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(strafePos, targetPos)
+                end
+            end
+        end
+
+        if CframeEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            local moveDirection = player.Character.Humanoid.MoveDirection
+            if moveDirection.Magnitude > 0 then
+                local targetCFrame = player.Character.HumanoidRootPart.CFrame + moveDirection * getgenv().Blaq.HvH.Cframe.Value
+                player.Character.HumanoidRootPart.CFrame = targetCFrame
+            end
+        end
+    end)
