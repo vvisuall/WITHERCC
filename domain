@@ -1,0 +1,838 @@
+getgenv().Domain = {
+    ["Intro"] = true,
+    ["Internal UI"] = true,
+    ["Silent Aim"] = {
+        ["Enabled"] = false,
+        ["Keybind Enabled"] = false,
+        ["Keybind"] = "M",
+        ["Hit Chance"] = 100,
+        ["Target Part"] = "UpperTorso",
+        ["Target Part Offset"] = 0,
+        ["Nearest Part To Cursor"] = false,
+    },
+    ["Cam Lock"] = {
+        ["Enabled"] = true,
+        ["Key"] = "Q",
+        ["Notify"] = true,
+        ["Target Part"] = "Head",
+        ["Target Part Offset"] = 0,
+        ["Nearest Part To Cursor"] = true,
+        ["Smoothness"] = {
+            ["Enabled"] = true,
+            ["Value"] = 0.058,
+        },
+        ["Flags"] = {
+            ["Unlock On KO"] = false, 
+            ["Unlock Outside FOV"] = false, 
+            ["Unlock Behind Wall"] = false, 
+        },
+        ["Shake"] = {
+            ["Enabled"] = false, 
+            ["X"] = 5, 
+            ["Y"] = 5, 
+            ["Z"] = 5, 
+        },
+    },
+    ["Global"] = {
+        ["Prediction"] = 0.133,
+        ["Auto Prediction"] = true,
+        ["Anti Ground Shots"] = false,
+    },
+    ["Checks"] = {
+        ["Visible Check"] = true,
+        ["K.O Check"] = true,
+        ["Crew Check"] = false,
+    },
+    ["Resolver"] = {
+        ["Enabled"] = false,
+        ["Method"] = "MoveDirection", -- // MoveDirection, No Prediction, Underground
+    },
+    ["FOV"] = {
+        ["Visible"] = true,
+        ["Filled"] = false,
+        ["Size"] = 150,
+        ["Thickness"] = 1,
+        ["Transparency"] = 1,
+        ["Color"] = Color3.fromRGB(255,255,255)
+    },
+    ["Airshot"] = {
+        ["Enabled"] = true,
+        ["Target Part"] = "LowerTorso",
+    },
+    ["Macro"] = {
+        ["Enabled"] = false,
+        ["Bind"] = "X",
+        ["Abuse"] = true, 
+        ["Speed"] = 1,
+    },
+}
+
+if domainisloaded then 
+    warn("Domain Already Loaded")
+    return
+else
+    getgenv().domainisloaded = true
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Gui = game:GetService("GuiService")
+
+local SilentTarget = nil
+local CamlockTarget = nil
+local PredictionValue = 0.133
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local CurrentCamera = Workspace.CurrentCamera
+local v3 = Vector3
+local CF = CFrame
+local v2 = Vector2
+local closestsilentbodypart = "Head"
+local closestcamlockpart = "Head"
+
+
+function notify(text) 
+    game:GetService("StarterGui"):SetCore("SendNotification",{
+        Title = "Domain",
+        Text = text, 
+        Duration = 5,
+    })
+end
+
+if Domain.Intro then 
+    local cam = workspace.CurrentCamera
+    local x = cam.ViewportSize.X
+    local y = cam.ViewportSize.Y
+    local newx = math.floor(x * 0.5)
+    local newy = math.floor(y * 0.5)
+
+    local SpashScreen = Instance.new("ScreenGui")
+    local Image = Instance.new("ImageLabel")
+    SpashScreen.Name = "SpashScreen"
+    SpashScreen.Parent = game.CoreGui
+    SpashScreen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    Image.Name = "Image"
+    Image.Parent = SpashScreen
+    Image.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Image.BackgroundTransparency = 1
+    Image.Position = UDim2.new(0, newx, 0, newy)
+    Image.Size = UDim2.new(0, 625, 0, 177)
+    Image.Image = "rbxassetid://14330453635"
+    Image.ImageTransparency = 1
+    Image.AnchorPoint = v2.new(0.5,0.5)
+
+    local Blur = Instance.new("BlurEffect")
+    Blur.Parent = game.Lighting
+    Blur.Size = 0
+    Blur.Name = math.random(1,123123)
+
+    local function gui(last, sex, t, s, inorout)
+        local TI = TweenInfo.new(t or 1, s or Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+        local Tweening = game:GetService("TweenService"):Create(last, TI, sex)
+        Tweening:Play()
+    end
+
+    gui(Image, {ImageTransparency = 0},0.3)
+    gui(Blur, {Size = 20},0.3)
+    wait(3)
+    gui(Image, {ImageTransparency = 1},0.3)
+    gui(Blur, {Size = 0},0.3)
+    wait(0.3)
+end
+
+if Domain["Internal UI"] then 
+    local HitpartTable = {"Head", "UpperTorso", "HumanoidRootPart", "LowerTorso", "LeftHand", "RightHand", "LeftLowerArm", "RightLowerArm", "LeftUpperArm", "RightUpperArm", "LeftFoot", "LeftLowerLeg",  "LeftUpperLeg", "RightLowerLeg", "RightFoot",  "RightUpperLeg"}
+
+    local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/cat"))() 
+    local Window = Library:CreateWindow("Domain", Vector2.new(492, 598), Enum.KeyCode.Z) --you can change your UI keybind
+    local AimingTab = Window:CreateTab("Aiming") --you can rename this tab to whatever you want --you can also change the tabs code, for example "AimingTab" can be changed to "FunnyCoolTab" etc.
+
+    local CamLock = AimingTab:CreateSector("Cam Lock", "left")  --you can  change the section code, for example "testsection" can be changed to "FunnyCoolSection" etc.
+
+    CamLock:AddToggle("Enabled", Domain["Cam Lock"].Enabled, function(toggle)
+        Domain["Cam Lock"].Enabled = toggle
+    end)
+    
+    CamLock:AddToggle("Nearest Part To Cursor", Domain["Cam Lock"]["Nearest Part To Cursor"], function(toggle)
+        Domain["Cam Lock"]["Nearest Part To Cursor"] = toggle
+    end)
+    
+    CamLock:AddToggle("Notify", Domain["Cam Lock"]["Notify"], function(toggle)
+        Domain["Cam Lock"]["Notify"] = toggle
+    end)
+    
+    CamLock:AddTextbox("Keybind", Domain["Cam Lock"]["Key"], function(State)
+        Domain["Cam Lock"]["Key"] = string.upper(State)
+    end)
+    
+    
+    CamLock:AddDropdown("Target Part", HitpartTable, Domain["Cam Lock"]["Target Part"], false, function(State)
+        Domain["Cam Lock"]["Target Part"] = State
+    end)
+    
+    CamLock:AddSlider("Offset", -5, Domain["Cam Lock"]["Target Part Offset"], 5, 10, function(State)
+        Domain["Cam Lock"]["Target Part Offset"] = State
+    end)
+    
+    CamLock:AddToggle("Unlock on KO", Domain["Cam Lock"]["Flags"]["Unlock On KO"], function(toggle)
+        Domain["Cam Lock"]["Flags"]["Unlock On KO"] = toggle
+    end)
+    
+    CamLock:AddToggle("Unlock Outside FOV", Domain["Cam Lock"]["Flags"]["Unlock Outside FOV"], function(toggle)
+        Domain["Cam Lock"]["Flags"]["Unlock Outside FOV"] = toggle
+    end)
+    
+    CamLock:AddToggle("Unlock Behind Wall", Domain["Cam Lock"]["Flags"]["Unlock Behind Wall"], function(toggle)
+        Domain["Cam Lock"]["Flags"]["Unlock Behind Wall"] = toggle
+    end)
+    
+    CamLock:AddToggle("Shake", Domain["Cam Lock"]["Shake"]["Enabled"], function(toggle)
+        Domain["Cam Lock"]["Shake"]["Enabled"] = toggle
+    end)
+    
+    CamLock:AddSlider("Shake XYZ", 0, Domain["Cam Lock"]["Shake"].X, 25, 10, function(State)
+        Domain["Cam Lock"]["Shake"].X = State
+        Domain["Cam Lock"]["Shake"].Y = State
+        Domain["Cam Lock"]["Shake"].Z = State
+    end)
+    
+    CamLock:AddToggle("Smoothness", Domain["Cam Lock"]["Smoothness"]["Enabled"], function(toggle)
+        Domain["Cam Lock"]["Smoothness"]["Enabled"] = toggle
+    end)
+
+    CamLock:AddTextbox("Smoothness Amount", Domain["Cam Lock"]["Smoothness"]["Value"], function(State)
+        Domain["Cam Lock"]["Smoothness"]["Value"] = tonumber(State)
+    end)
+    
+    
+
+    local Silent = AimingTab:CreateSector("Silent Aim", "right")  --you can  change the section code, for example "testsection" can be changed to "FunnyCoolSection" etc.
+
+    Silent:AddToggle("Enabled", Domain["Silent Aim"].Enabled, function(toggle)
+        Domain["Silent Aim"].Enabled = toggle
+    end)
+
+    Silent:AddToggle("Nearest Part To Cursor", Domain["Silent Aim"]["Nearest Part To Cursor"], function(toggle)
+        Domain["Silent Aim"]["Nearest Part To Cursor"] = toggle
+    end)
+
+    Silent:AddToggle("Keybind Enabled", Domain["Silent Aim"]["Keybind Enabled"], function(toggle)
+        Domain["Silent Aim"]["Keybind Enabled"] = toggle
+    end)
+
+    Silent:AddTextbox("Keybind", Domain["Silent Aim"]["Keybind"], function(State)
+        Domain["Silent Aim"]["Keybind"] = string.upper(State)
+    end)
+
+    Silent:AddSlider("Hit Chance", 0, Domain["Silent Aim"]["Hit Chance"], 100, 1, function(State)
+        Domain["Silent Aim"]["Hit Chance"] = State
+    end)
+
+    Silent:AddDropdown("Target Part", HitpartTable, Domain["Silent Aim"]["Target Part"], false, function(State)
+        Domain["Silent Aim"]["Target Part"] = State
+    end)
+    
+    Silent:AddSlider("Offset", -5, Domain["Silent Aim"]["Target Part Offset"], 5, 10, function(State)
+        Domain["Silent Aim"]["Target Part Offset"] = State
+    end)
+
+    
+    local Resolver = AimingTab:CreateSector("Resolver", "left")  --you can  change the section code, for example "testsection" can be changed to "FunnyCoolSection" etc.
+
+    Resolver:AddToggle("Enabled",Domain["Resolver"]["Enabled"], function(toggle)
+        Domain["Resolver"]["Enabled"] = toggle
+    end)
+
+
+    Resolver:AddDropdown("Method", {"MoveDirection","No Prediction","Underground"}, Domain["Resolver"]["Method"], false, function(State)
+        Domain["Resolver"]["Method"] = State
+    end)
+
+    local FOV = AimingTab:CreateSector("FOV", "right")  
+
+    FOV:AddToggle("Visible",Domain["FOV"]["Enabled"], function(toggle)
+        Domain["FOV"]["Enabled"] = toggle
+    end)
+
+    
+    FOV:AddToggle("Filled",Domain["FOV"]["Filled"], function(toggle)
+        Domain["FOV"]["Filled"] = toggle
+    end)
+        
+    FOV:AddSlider("Size", 0,Domain["FOV"]["Size"], 300, 1, function(State)
+        Domain["FOV"]["Size"] = State
+    end)
+
+    FOV:AddSlider("Transparency", 0,Domain["FOV"]["Transparency"], 300, 1, function(State)
+        Domain["FOV"]["Transparency"] = State
+    end)
+
+end
+
+
+
+
+if not LPH_OBFUSCATED and not LPH_JIT_ULTRA then
+    LPH_NO_VIRTUALIZE = function(f) return f end
+end
+
+
+
+local Circle = Drawing.new("Circle")
+Circle.Transparency = Domain.FOV.Transparency
+Circle.Radius = Domain.FOV.Size
+Circle.Visible = Domain.FOV.Visible
+Circle.Color = Domain.FOV.Color
+Circle.Thickness = Domain.FOV.Thickness
+Circle.Filled = Domain.FOV.Filled
+
+
+local Vis1 = Drawing.new("Circle")
+Vis1.Filled = true
+Vis1.Thickness = 1
+Vis1.Transparency = 1
+Vis1.Radius = 5
+Vis1.Color = Color3.new(1,1,1)
+
+local Vis2 = Drawing.new("Line")
+Vis2.Visible = false
+Vis2.From = v2.new(0, 0)
+Vis2.To = v2.new(200, 200)
+Vis2.Color = Color3.new(1,1,1)
+Vis2.Thickness = 1
+Vis2.Transparency = 1
+
+OnScreen = function(Object)
+    local _, screen = CurrentCamera:WorldToScreenPoint(Object.Position)
+    return screen
+end
+
+
+RayCastCheck = function(Part, PartDescendant)
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded.Wait(LocalPlayer.CharacterAdded)
+    local Origin = CurrentCamera.CFrame.Position
+
+    local RayCastParams = RaycastParams.new()
+    RayCastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    RayCastParams.FilterDescendantsInstances = {Character, CurrentCamera}
+
+    local Result = Workspace.Raycast(Workspace, Origin, Part.Position - Origin, RayCastParams)
+    
+    if (Result) then
+        local PartHit = Result.Instance
+        local Visible = (not PartHit or Instance.new("Part").IsDescendantOf(PartHit, PartDescendant))
+        
+        return Visible
+    end
+    return false
+end
+
+Alive = function(Plr)
+    if Plr and Plr.Character and Plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and Plr.Character:FindFirstChild("Humanoid") ~= nil and Plr.Character:FindFirstChild("Head") ~= nil then
+        return true
+    end
+    return false
+end
+
+
+GetMagnitudeFromMouse = function(Part)
+    local PartPos, OnScreen = CurrentCamera:WorldToScreenPoint(Part.Position)
+    if OnScreen then
+        local Magnitude = (v2.new(PartPos.X, PartPos.Y) - v2.new(Mouse.X, Mouse.Y)).Magnitude
+        return Magnitude
+    end
+    return math.huge
+end
+
+GetPrediction = function() 
+    if Domain["Global"]["Auto Prediction"] then 
+
+        local PingStats = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+        local Value = tostring(PingStats)
+        local PingValue = Value:split(" ")
+        local PingNumber = tonumber(PingValue[1])
+
+        if PingNumber < 130 then
+            return tonumber(PingNumber / 1000 + 0.037)
+        else
+            return tonumber(PingNumber / 1000 + 0.033)
+        end
+    else
+        return tonumber(Domain["Global"].Prediction)
+    end
+end
+
+FindCrew = function(Player)
+	if Player:FindFirstChild("DataFolder") and Player.DataFolder:FindFirstChild("Information") and Player.DataFolder.Information:FindFirstChild("Crew") and LocalPlayer:FindFirstChild("DataFolder") and LocalPlayer.DataFolder:FindFirstChild("Information") and LocalPlayer.DataFolder.Information:FindFirstChild("Crew") then
+        if LocalPlayer.DataFolder.Information:FindFirstChild("Crew").Value ~= nil and Player.DataFolder.Information:FindFirstChild("Crew").Value ~= nil and Player.DataFolder.Information:FindFirstChild("Crew").Value ~= "" and LocalPlayer.DataFolder.Information:FindFirstChild("Crew").Value ~= "" then 
+			return true
+		end
+	end
+	return false
+end
+
+GetGunName = function(Name)
+    local split = string.split(string.split(Name, "[")[2], "]")[1]
+    return split
+end
+
+GetCurrentWeaponName = function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Tool") then
+       local Tool =  LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
+       if string.find(Tool.Name, "%[") and string.find(Tool.Name, "%]") and not string.find(Tool.Name, "Wallet") and not string.find(Tool.Name, "Phone") then
+          return GetGunName(Tool.Name)
+       end
+    end
+    return nil
+end
+
+WTS = function(Object)
+	local ObjectVector = CurrentCamera:WorldToScreenPoint(Object.Position)
+	return v2.new(ObjectVector.X, ObjectVector.Y)
+end
+
+Filter = function(obj)
+	if (obj:IsA('BasePart')) then
+		return true
+	end
+end
+
+mousePosv2 = function()
+	return v2.new(Mouse.X, Mouse.Y) 
+end
+
+IsOnScreen2 = function(Object)
+    local IsOnScreen = CurrentCamera:WorldToScreenPoint(Object.Position)
+    return IsOnScreen
+end
+
+FilterObjs = function(Object)
+    if string.find(Object.Name, "Gun") then
+        return
+    end
+    if table.find({"Part", "MeshPart", "BasePart"}, Object.ClassName) then
+        return true
+    end
+end
+
+
+GetClosestBodyPart = function()
+    local character = SilentTarget.Character
+    local ClosestDistance = 1 / 0
+    local BodyPart = nil
+    if (character and character:GetChildren()) then
+        for _, x in next, character:GetChildren() do
+            if FilterObjs(x) and IsOnScreen2(x) then
+                local Distance = (WTS(x) - v2.new(Mouse.X, Mouse.Y)).Magnitude
+                    if (Distance < ClosestDistance) then
+                        ClosestDistance = Distance
+                        BodyPart = x
+                    end
+            end
+        end
+    end
+    if Domain["Silent Aim"]["Nearest Part To Cursor"] then 
+        closestsilentbodypart = tostring(BodyPart)
+    else
+        closestsilentbodypart = Domain["Silent Aim"]["Target Part"]
+    end
+
+end
+
+GetClosestBodyPart2 = function()
+    local character = CamlockTarget.Character
+    local ClosestDistance = 1 / 0
+    local BodyPart = nil
+    if (character and character:GetChildren()) then
+        for _, x in next, character:GetChildren() do
+            if FilterObjs(x) and IsOnScreen2(x) then
+                local Distance = (WTS(x) - v2.new(Mouse.X, Mouse.Y)).Magnitude
+                    if (Distance < ClosestDistance) then
+                        ClosestDistance = Distance
+                        BodyPart = x
+                    end
+            end
+        end
+    end
+    if Domain["Cam Lock"]["Nearest Part To Cursor"] then 
+        closestcamlockpart = tostring(BodyPart)
+    else
+        closestcamlockpart = Domain["Cam Lock"]["Target Part"] 
+    end
+end
+
+UpdateFOV = function()
+    Circle.Transparency = Domain.FOV.Transparency
+    Circle.Radius = Domain.FOV.Size
+    Circle.Visible = Domain.FOV.Visible
+    Circle.Color = Domain.FOV.Color
+    Circle.Thickness = Domain.FOV.Thickness
+    Circle.Filled = Domain.FOV.Filled
+    Circle.Position = v2.new(Mouse.X, Mouse.Y + Gui:GetGuiInset().Y)
+end
+
+
+CalculateChance = function(Percentage)
+    Percentage = math.floor(Percentage)
+    local chance = math.floor(Random.new().NextNumber(Random.new(), 0, 1) * 100) / 100
+
+    return chance < Percentage / 100
+end
+
+GetClosestPlayer = function()
+    local Target = nil
+    local Closest = math.huge
+
+    local HitChance = CalculateChance(Domain["Silent Aim"]["Hit Chance"])
+
+    if not HitChance then
+        return nil
+    end
+
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Character and v ~= LocalPlayer and v.Character:FindFirstChild("HumanoidRootPart") then
+            if not OnScreen(v.Character.HumanoidRootPart) then 
+                continue 
+            end
+            if Domain.Checks["Visible Check"] and not RayCastCheck(v.Character.HumanoidRootPart, v.Character) then 
+                continue 
+            end
+            if Domain.Checks["K.O Check"] and v.Character:FindFirstChild("BodyEffects") then
+                local KoCheck 
+                if game.PlaceId == 7242996350 or game.PlaceId == 12884917481 then 
+                    KoCheck = v.Character.BodyEffects:FindFirstChild("KO").Value
+                else
+                    KoCheck = v.Character.BodyEffects:FindFirstChild("K.O").Value
+                end
+                local Grabbed = v.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+                if KoCheck or Grabbed then
+                    continue
+                end
+            end
+            if Domain.Checks["Crew Check"] and FindCrew(v) and v.DataFolder.Information:FindFirstChild("Crew").Value == LocalPlayer.DataFolder.Information:FindFirstChild("Crew").Value then
+                continue
+            end
+
+            local Distance = GetMagnitudeFromMouse(v.Character.HumanoidRootPart)
+
+            if (Distance < Closest and Circle.Radius + 10 > Distance) then
+                Closest = Distance
+                Target = v
+            end
+        end
+    end
+
+    SilentTarget = Target
+end
+
+GetClosestPlayer2 = function()
+    local Target = nil
+    local Closest = math.huge
+
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Character and v ~= LocalPlayer and v.Character:FindFirstChild("HumanoidRootPart") then
+            if not OnScreen(v.Character.HumanoidRootPart) then 
+                continue 
+            end
+            if Domain.Checks["Visible Check"] and not RayCastCheck(v.Character.HumanoidRootPart, v.Character) then 
+                continue 
+            end
+            if Domain.Checks["K.O Check"] and v.Character:FindFirstChild("BodyEffects") then
+                local KoCheck 
+                if game.PlaceId == 7242996350 or game.PlaceId == 12884917481 then 
+                    KoCheck = v.Character.BodyEffects:FindFirstChild("KO").Value
+                else
+                    KoCheck = v.Character.BodyEffects:FindFirstChild("K.O").Value
+                end
+                local Grabbed = v.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+                if KoCheck or Grabbed then
+                    continue
+                end
+            end
+            if Domain.Checks["Crew Check"] and FindCrew(v) and v.DataFolder.Information:FindFirstChild("Crew").Value == LocalPlayer.DataFolder.Information:FindFirstChild("Crew").Value then
+                continue
+            end
+
+            local Distance = GetMagnitudeFromMouse(v.Character.HumanoidRootPart)
+
+            if (Distance < Closest and Circle.Radius + 10 > Distance) then
+                Closest = Distance
+                Target = v
+            end
+        end
+    end
+
+    CamlockTarget = Target
+end
+
+
+RunService.Heartbeat:Connect(function()
+    UpdateFOV()
+    PredictionValue = GetPrediction()
+    if Domain["Silent Aim"].Enabled then 
+        GetClosestPlayer()
+        if Domain["Silent Aim"]["Nearest Part To Cursor"] and SilentTarget then 
+            GetClosestBodyPart()
+        end
+    end
+    if Domain["Cam Lock"].Enabled then 
+        GetClosestPlayer()
+        if Domain["Cam Lock"]["Nearest Part To Cursor"] and CamlockTarget then 
+            GetClosestBodyPart2()
+        end
+    end
+    
+end)
+
+
+local speeding = false
+Mouse.KeyDown:Connect(function(Key)
+    if Key == (string.lower(Domain.Macro.Bind)) and Domain.Macro.Abuse == false then
+        if Domain.Macro.Enabled then
+            speeding = not speeding
+            if speeding == true then
+                repeat task.wait(Domain.Macro.Speed / 100)
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                task.wait(Domain.Macro.Speed / 100)
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                task.wait(Domain.Macro.Speed / 100)
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                task.wait(Domain.Macro.Speed / 100)
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                task.wait(Domain.Macro.Speed / 100)
+                until speeding == false
+            end
+        end
+    end
+end)
+
+
+Mouse.KeyDown:Connect(function(Key)
+    if Key == (string.lower(Domain.Macro.Bind)) and Domain.Macro.Abuse == true then
+        if Domain.Macro.Enabled  then
+            SpeedGlitch = not SpeedGlitch
+            if SpeedGlitch == true then
+                repeat task.wait(Domain.Macro.Speed / 100)
+                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                    task.wait(Domain.Macro.Speed / 100)
+                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                    task.wait(Domain.Macro.Speed / 100)
+                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                    task.wait(Domain.Macro.Speed / 100)
+                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                    task.wait(Domain.Macro.Speed / 100)
+                until SpeedGlitch == false
+            end
+        end
+    end
+end)
+
+Mouse.KeyDown:Connect(function(Key)
+    local Keybind = Domain["Silent Aim"].Keybind:lower()
+    if (Key == Keybind) then
+        if Domain["Silent Aim"]["Keybind Enabled"] then 
+            if Domain["Silent Aim"].Enabled == true then 
+                Domain["Silent Aim"].Enabled = false
+                notify("Silent aim disabled.")
+            else
+                Domain["Silent Aim"].Enabled = true
+                notify("Silent aim enabled.")
+            end
+        end
+    end
+end)
+
+
+
+game.Players.LocalPlayer.Character.ChildAdded:Connect(LPH_NO_VIRTUALIZE(function(tool)
+    if tool:IsA("Tool") then
+        tool.Activated:Connect(function()
+            if Domain["Silent Aim"].Enabled then
+                if SilentTarget ~= nil then
+                    local targetbone
+                    if Domain.Airshot.Enabled then
+                        if SilentTarget.Character.Humanoid.Jump == true then
+                            targetbone = SilentTarget.Character[Domain.Airshot["Target Part"]]
+                        else
+                            targetbone = SilentTarget.Character[closestsilentbodypart]
+                        end
+                    else
+                        targetbone = SilentTarget.Character[Domain["Silent Aim"]["Target Part"]]
+                    end
+                    local Prediction
+                    if not Domain.Resolver.Enabled then 
+                        Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0) + targetbone.Velocity * PredictionValue
+                    else
+                        if Domain.Resolver.Method == "MoveDirection" then 
+                            Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0) + SilentTarget.Character.Humanoid.MoveDirection * PredictionValue * 16
+                        elseif Domain.Resolver.Method == "No Prediction" then
+                            Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0)
+                        elseif Domain.Resolver.Method == "Underground" then
+                            targetbone.Velocity = v3.new(targetbone.Velocity.X, 0, targetbone.Velocity.Z)
+                            targetbone.AssemblyLinearVelocity = v3.new(targetbone.Velocity.X, 0, targetbone.Velocity.Z)
+                            Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0) + targetbone.Velocity * PredictionValue
+                        end
+                    end
+                    game.ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", Prediction)
+                end
+            end
+        end)
+    end
+end))
+    
+game.Players.LocalPlayer.CharacterAdded:Connect(LPH_NO_VIRTUALIZE(function(Character)
+    Character.ChildAdded:Connect(function(tool)
+        if tool:IsA("Tool") then
+            tool.Activated:Connect(function()
+                if Domain["Silent Aim"].Enabled then
+                    if SilentTarget ~= nil then
+                        local targetbone
+                        if Domain.Airshot.Enabled then
+                            if SilentTarget.Character.Humanoid.Jump == true then
+                                targetbone = SilentTarget.Character[Domain.Airshot["Target Part"]]
+                            else
+                                targetbone = SilentTarget.Character[closestsilentbodypart]
+                            end
+                        else
+                            targetbone = SilentTarget.Character[Domain["Silent Aim"]["Target Part"]]
+                        end
+                        local Prediction
+                        if not Domain.Resolver.Enabled then 
+                            Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0) + targetbone.Velocity * PredictionValue
+                        else
+                            if Domain.Resolver.Method == "MoveDirection" then 
+                                Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0) + SilentTarget.Character.Humanoid.MoveDirection * PredictionValue * 16
+                            elseif Domain.Resolver.Method == "No Prediction" then
+                                Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0)
+                            elseif Domain.Resolver.Method == "Underground" then
+                                targetbone.Velocity = v3.new(targetbone.Velocity.X, 0, targetbone.Velocity.Z)
+                                targetbone.AssemblyLinearVelocity = v3.new(targetbone.Velocity.X, 0, targetbone.Velocity.Z)
+                                Prediction = targetbone.Position + v3.new(0,Domain["Silent Aim"]["Target Part Offset"],0) + targetbone.Velocity * PredictionValue
+                            end
+                        end
+                        game.ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", Prediction)
+                    end
+                end
+            end)
+        end
+    end)
+end))
+
+local targeting = false
+
+Mouse.KeyDown:Connect(function(Key)
+    local Keybind = Domain["Cam Lock"].Key:lower()
+    if (Key == Keybind) then
+        if Domain["Cam Lock"].Enabled == true then 
+            if targeting == false then 
+                GetClosestPlayer2()
+                if CamlockTarget ~= nil then 
+                    targeting = true
+                    if Domain["Cam Lock"].Notify then 
+                        notify("Locked onto: "..tostring(CamlockTarget))
+                    end
+                else
+                
+                    if Domain["Cam Lock"].Notify then 
+                        notify("No Player In FOV")
+                    end
+                end
+            else
+                targeting = false
+                CamlockTarget = nil
+                if Domain["Cam Lock"].Notify then 
+                    notify("Unlocked")
+                end
+            end
+        end
+    end
+end)
+
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if Domain["Cam Lock"].Flags["Unlock Outside FOV"] and CamlockTarget and CamlockTarget.Character and CamlockTarget.Character:FindFirstChild(closestcamlockpart) then
+        if Circle.Radius <
+            (v2.new(
+                CurrentCamera:WorldToScreenPoint(CamlockTarget.Character.HumanoidRootPart.Position).X,
+                CurrentCamera:WorldToScreenPoint(CamlockTarget.Character.HumanoidRootPart.Position).Y
+            ) - v2.new(Mouse.X, Mouse.Y)).Magnitude
+         then
+            CamlockTarget = nil
+            targeting = false
+        end
+    end
+    if Domain["Cam Lock"].Flags["Unlock On KO"] == true and CamlockTarget ~= nil and CamlockTarget.Character and CamlockTarget.Character:FindFirstChild(closestcamlockpart) then
+        if CamlockTarget.Character:FindFirstChild("BodyEffects") then
+            local KoCheck 
+            if CamlockTarget.Character.BodyEffects:FindFirstChild("KO") then 
+                KoCheck = CamlockTarget.Character.BodyEffects:FindFirstChild("KO").Value
+            elseif CamlockTarget.Character.BodyEffects:FindFirstChild("K.O") then
+                KoCheck = CamlockTarget.Character.BodyEffects:FindFirstChild("K.O").Value
+            end
+            
+            if KoCheck then
+                CamlockTarget = nil   
+                targeting = false
+                if Domain["Cam Lock"].Notify then 
+                    notify("Target Knocked, Unlocked.")
+                end
+            end
+        end
+    end
+    if Domain["Cam Lock"].Flags["Unlock Behind Wall"] == true and CamlockTarget ~= nil and CamlockTarget.Character and CamlockTarget.Character:FindFirstChild(closestcamlockpart) then
+        if not RayCastCheck(CamlockTarget.Character[closestcamlockpart], CamlockTarget.Character) then 
+            CamlockTarget = nil   
+            targeting = false
+            if Domain["Cam Lock"].Notify then 
+                notify("Target Behind Wall, Unlocked.")
+            end
+        end
+    end
+    if Domain["Cam Lock"].Enabled and CamlockTarget and CamlockTarget.Character and CamlockTarget.Character:FindFirstChild(Domain["Cam Lock"]["Target Part"]) then 
+        if targeting == true then
+            local targetbone
+            local shake = v3.new(0,0,0)
+            if Domain.Airshot.Enabled then
+                if CamlockTarget.Character.Humanoid.Jump == true then
+                    targetbone = CamlockTarget.Character[Domain.Airshot["Target Part"]]
+                else
+                    targetbone = CamlockTarget.Character[closestcamlockpart]
+                end
+            else
+                targetbone = CamlockTarget.Character[Domain["Cam Lock"]["Target Part"]]
+            end
+            if Domain["Global"]["Anti Ground Shots"] then 
+                targetbone.Velocity = v3.new(targetbone.Velocity.X, targetbone.Velocity.Y * 0.5, targetbone.Velocity.Z)
+                targetbone.AssemblyLinearVelocity = v3.new(targetbone.Velocity.X, targetbone.Velocity.Y * 0.5, targetbone.Velocity.Z)
+            end
+            if Domain["Cam Lock"].Shake.Enabled then 
+                shake = v3.new(
+                    math.random(-Domain["Cam Lock"].Shake.X, Domain["Cam Lock"].Shake.X),
+                    math.random(-Domain["Cam Lock"].Shake.Y, Domain["Cam Lock"].Shake.Y),
+                    math.random(-Domain["Cam Lock"].Shake.Z, Domain["Cam Lock"].Shake.Z)
+                ) * 0.1
+            end
+            local Prediction
+            if not Domain.Resolver.Enabled then 
+                Prediction = targetbone.Position + v3.new(0,Domain["Cam Lock"]["Target Part Offset"],0) + targetbone.Velocity * PredictionValue + shake
+            else
+                if Domain.Resolver.Method == "MoveDirection" then 
+                    Prediction = targetbone.Position + v3.new(0,Domain["Cam Lock"]["Target Part Offset"],0) + CamlockTarget.Character.Humanoid.MoveDirection * PredictionValue + shake * 16  
+                elseif Domain.Resolver.Method == "No Prediction"  then
+                    Prediction = targetbone.Position + v3.new(0,Domain["Cam Lock"]["Target Part Offset"],0) + shake 
+            elseif Domain.Resolver.Method == "Underground"  then
+                    targetbone.Velocity = v3.new(targetbone.Velocity.X, 0, targetbone.Velocity.Z)
+                    targetbone.AssemblyLinearVelocity = v3.new(targetbone.Velocity.X, 0, targetbone.Velocity.Z)
+                    Prediction = targetbone.Position + v3.new(0,Domain["Cam Lock"]["Target Part Offset"],0) + targetbone.Velocity * PredictionValue + shake
+                end
+            end
+            local Main = CF.new(CurrentCamera.CFrame.p, Prediction)
+            if Domain["Cam Lock"].Smoothness.Enabled then 
+                CurrentCamera.CFrame = CurrentCamera.CFrame:Lerp(Main, Domain["Cam Lock"].Smoothness.Value, "Exponential", Enum.EasingDirection.InOut)
+            else
+                CurrentCamera.CFrame = CurrentCamera.CFrame:Lerp(Main, 1, "Exponential", Enum.EasingDirection.InOut)
+            end
+        end
+    end
+end)
