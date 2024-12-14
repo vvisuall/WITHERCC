@@ -1,0 +1,81 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+   Name = "Visual Hub | ⚔️ Slash Mobs Simulator",
+   Icon = 17091459839,
+   LoadingTitle = "Visual Hub",
+   LoadingSubtitle = "By vvhrrs",
+   Theme = "Amethyst"
+})
+
+-- Valores
+_G.FastRegen = false
+_G.QuestRewards = false
+
+-- Funções
+local function FastRegen()
+	while _G.FastRegen == true do
+		game:GetService("ReplicatedStorage").Remote.Event.Up:FindFirstChild("[C-S]TryRegen"):FireServer(1)
+		wait(0.0001)
+	end
+end
+local function GetCodes()
+	game:GetService("ReplicatedStorage").CdkRewardFuntion.isPlayerUseCdkRequest:InvokeServer("SLASHRELEASE")
+	game:GetService("ReplicatedStorage").CdkRewardFuntion.isPlayerUseCdkRequest:InvokeServer("2000likes")
+end
+local function QuestRewards()
+	while _G.QuestRewards == true do
+		for q = 1, 2 do
+			local questie = "Q" .. q
+			game:GetService("ReplicatedStorage").Remote.Event.DailyMission:FindFirstChild("[C-S]PlayerGetReward"):FireServer(questie)
+		end
+		wait(0.5)
+	end
+end
+local function DoChallenge()
+	game:GetService("ReplicatedStorage").Remote.Event.Eco:FindFirstChild("[C-S]Trybreakthrough"):FireServer()
+end
+
+-- Menu
+local Menu = Window:CreateTab("Main", "home")
+local Section = Menu:CreateSection("Combat")
+local Toggle =  Menu:CreateToggle({
+   Name = "Fast Regen",
+   CurrentValue = false,
+   Callback = function(Value)
+   	_G.FastRegen = Value
+   	FastRegen()
+   end,
+})
+local Button = Menu:CreateButton({
+   Name = "Start Challenge",
+   Callback = function()
+   	DoChallenge()
+    end,
+})
+local Section = Menu:CreateSection("Extra")
+local Toggle =  Menu:CreateToggle({
+   Name = "Auto Gems (Slow)",
+   CurrentValue = false,
+   Callback = function(Value)
+   	_G.QuestRewards = Value
+   	QuestRewards()
+   end,
+})
+local Button = Menu:CreateButton({
+   Name = "Reedem Codes",
+   Callback = function()
+   	GetCodes()
+    end,
+})
+
+-- Credits.
+local Credits = Window:CreateTab("Credits", "info")
+local Section = Credits:CreateSection("Discord Server")
+local Label = Credits:CreateLabel("discord.gg/U8FhFdvGcf")
+local Button = Credits:CreateButton({
+   Name = "Copy Server Link",
+   Callback = function()
+   	setclipboard("discord.gg/U8FhFdvGcf")
+   	toclipboard("discord.gg/U8FhFdvGcf")
+    end,
+})
