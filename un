@@ -1,0 +1,83 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+-- Notification Function
+local function createNotification(message)
+    -- Ensure we have a LocalPlayer
+    local player = Players.LocalPlayer
+    if not player then return end
+    
+    -- Create ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "NotificationGui"
+    screenGui.Parent = player.PlayerGui
+    
+    -- Create Frame
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 200, 0, 50)
+    frame.Position = UDim2.new(0.5, -100, 0.8, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Purple background
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    
+    -- Rounded corners
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0.2, 0)
+    corner.Parent = frame
+    
+    -- Text Label
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.Position = UDim2.new(0, 0, 0, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = message
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextScaled = true
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.Parent = frame
+    
+    -- Tween Position
+    local startPos = frame.Position
+    local endPos = UDim2.new(0.5, -100, 0.9, -50)
+    
+    local tween = TweenService:Create(frame, 
+        TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+        {Position = endPos}
+    )
+    
+    -- Fade in
+    frame.BackgroundTransparency = 1
+    textLabel.TextTransparency = 1
+    tween:Play()
+    
+    -- Gradually reduce transparency
+    local function fadeIn()
+        for i = 1, 10 do
+            frame.BackgroundTransparency = 1 - (i/10)
+            textLabel.TextTransparency = 1 - (i/10)
+            wait(0.1)
+        end
+    end
+    
+    -- Fade out
+    local function fadeOut()
+        for i = 10, 1, -1 do
+            frame.BackgroundTransparency = 1 - (i/10)
+            textLabel.TextTransparency = 1 - (i/10)
+            wait(0.1)
+        end
+        screenGui:Destroy()
+    end
+    
+    -- Run fade effects
+    coroutine.wrap(fadeIn)()
+    
+    -- Wait and fade out
+    wait(3)
+    coroutine.wrap(fadeOut)()
+end
+
+-- Display notifications
+createNotification("Made by vvhrrs, Discord")
+wait(1)
+createNotification("SILENT AIM VERSION : 2.9")
