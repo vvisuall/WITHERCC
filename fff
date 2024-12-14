@@ -2,7 +2,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "Visual Hub | Farm for Fun! 🌾",
    Icon = 17091459839,
-   LoadingTitle = "Hallow Hub",
+   LoadingTitle = "Visual Hub",
    LoadingSubtitle = "By vvhrrs",
    Theme = "Amethyst"
 })
